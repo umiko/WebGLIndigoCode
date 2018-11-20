@@ -85,6 +85,7 @@ function initWebGL(){
     let triangleVertexBuffer = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, triangleVertexBuffer);
     context.bufferData(context.ARRAY_BUFFER, new Float32Array(triangleVertices), context.STATIC_DRAW);
+
     let positionAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
     let colorAttributeLocation = context.getAttribLocation(shaderProgram, "vertColor");
 
@@ -110,7 +111,8 @@ function initWebGL(){
     context.enableVertexAttribArray(colorAttributeLocation);
 
     context.useProgram(shaderProgram);
-    context.drawArrays(context.TRIANGLES,
+    context.drawArrays(
+        context.TRIANGLES,
         0, //offset of vertices
         3  //how many verts to draw
     );
