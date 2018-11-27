@@ -1,17 +1,20 @@
-var vertexShaderCode = [
+const vertexShaderCode = [
     'precision mediump float;',
     '',
-    'attribute vec2 vertPosition;',
+    'attribute vec3 vertPosition;',
     'attribute vec3 vertColor;',
     'varying vec3 fragColor;',
+    'uniform mat4 mWorld;',
+    'uniform mat4 mView;',
+    'uniform mat4 mProj;',
     '',
     'void main(){',
     '   fragColor = vertColor;',
-    '   gl_Position= vec4(vertPosition, 0.0, 1.0);',
+    '   gl_Position= mProj * mView * mWorld * vec4(vertPosition, 1.0);',
     '}'
 ].join('\n');
 
-var fragmentShaderCode = [
+const fragmentShaderCode = [
     'precision mediump float;',
     '',
     'varying vec3 fragColor;',
@@ -76,10 +79,10 @@ function initWebGL(){
     //
 
     let triangleVertices = [
-        //X,Y    R, G, B
-        0.0,0.5, 1.0,1.0,0.0,
-        -0.5,-0.5, 0.7, 0.0, 1.0,
-        0.5,-0.5, 0.1, 1.0, 0.6
+        //X,Y, Z    R, G, B
+        0.0,0.5,0.0, 1.0,1.0,0.0,
+        -0.5,-0.5,0.0, 0.7, 0.0, 1.0,
+        0.5,-0.5,0.0, 0.1, 1.0, 0.6
     ];
 
     let triangleVertexBuffer = context.createBuffer();
@@ -91,10 +94,10 @@ function initWebGL(){
 
     context.vertexAttribPointer(
         positionAttributeLocation, //Attribute location
-        2, //number of elements per Attribute
+        3, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+        6*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
         0 //offset
     );
 
@@ -103,18 +106,56 @@ function initWebGL(){
         3, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
-        2*Float32Array.BYTES_PER_ELEMENT //offset
+        6*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
+        3*Float32Array.BYTES_PER_ELEMENT //offset
     );
 
     context.enableVertexAttribArray(positionAttributeLocation);
     context.enableVertexAttribArray(colorAttributeLocation);
 
+    //Tell WebGL what program should have the uniforms
     context.useProgram(shaderProgram);
-    context.drawArrays(
-        context.TRIANGLES,
-        0, //offset of vertices
-        3  //how many verts to draw
-    );
+
+    let matWorldUniformLocation = context.getUniformLocation(shaderProgram,"mWorld");
+    let matViewUniformLocation = context.getUniformLocation(shaderProgram,"mView");
+    let matProjUniformLocation = context.getUniformLocation(shaderProgram, "mProj");
+
+    let worldMatrix = new Float32Array(16);
+    let viewMatrix = new Float32Array(16);
+    let projMatrix = new Float32Array(16);
+
+    mat4.identity(worldMatrix);
+    mat4.lookAt(viewMatrix, [0,0,-5], [0,0,0], [0,1,0]);
+    mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, .1, 1000.0);
+
+    context.uniformMatrix4fv(matWorldUniformLocation, false, worldMatrix);
+    context.uniformMatrix4fv(matViewUniformLocation, false, viewMatrix);
+    context.uniformMatrix4fv(matProjUniformLocation, false, projMatrix);
+
+    //
+    // Main loop
+    //
+    let identityMatrix = new Float32Array(16);
+    mat4.identity(identityMatrix);
+    let angle = 0;
+    let loop = function(){
+        angle = performance.now() /1000/6*2*Math.PI;
+        mat4.rotate(worldMatrix, identityMatrix, angle, [0,1,0]);
+
+        context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
+
+        context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
+
+        context.drawArrays(
+            context.TRIANGLES,
+            0, //offset of vertices
+            3  //how many verts to draw
+        );
+        requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+
+
+
 
 }
