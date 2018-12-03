@@ -2,14 +2,14 @@ const vertexShaderCode = [
     'precision mediump float;',
     '',
     'attribute vec3 vertPosition;',
-    'attribute vec3 vertColor;',
-    'varying vec3 fragColor;',
+    'attribute vec2 vertTexCoord;',
+    'varying vec2 fragTexCoord;',
     'uniform mat4 mWorld;',
     'uniform mat4 mView;',
     'uniform mat4 mProj;',
     '',
     'void main(){',
-    '   fragColor = vertColor;',
+    '   fragTexCoord = vertTexCoord;',
     '   gl_Position= mProj * mView * mWorld * vec4(vertPosition, 1.0);',
     '}'
 ].join('\n');
@@ -17,10 +17,11 @@ const vertexShaderCode = [
 const fragmentShaderCode = [
     'precision mediump float;',
     '',
-    'varying vec3 fragColor;',
+    'varying vec2 fragTexCoord;',
+    'uniform sampler2D sampler;',
     '',
     'void main(){',
-    '   gl_FragColor = vec4(fragColor, 1.0);',
+    '   gl_FragColor = texture2D(sampler, fragTexCoord);',
     '}'
 ].join('\n');
 
@@ -39,6 +40,8 @@ function initWebGL(){
 
     context.clearColor(.75, .85, .8, 1.0);
     context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
+    context.enable(context.DEPTH_TEST);
+    context.enable(context.CULL_FACE);
 
     let vertexShader = context.createShader(context.VERTEX_SHADER);
     let fragmentShader = context.createShader(context.FRAGMENT_SHADER);
@@ -78,40 +81,118 @@ function initWebGL(){
     //
     //
 
-    let triangleVertices = [
-        //X,Y, Z    R, G, B
-        0.0,0.5,0.0, 1.0,1.0,0.0,
-        -0.5,-0.5,0.0, 0.7, 0.0, 1.0,
-        0.5,-0.5,0.0, 0.1, 1.0, 0.6
+    let boxVertices = [
+        //X,Y, Z           U,V
+        // Top
+        -1.0, 1.0, -1.0,   0, 0,
+        -1.0, 1.0, 1.0,    0, 1,
+        1.0, 1.0, 1.0,     1, 1,
+        1.0, 1.0, -1.0,    1, 0,
+
+        // Left
+        -1.0, 1.0, 1.0,    0, 0,
+        -1.0, -1.0, 1.0,   1, 0,
+        -1.0, -1.0, -1.0,  1, 1,
+        -1.0, 1.0, -1.0,   0, 1,
+
+        // Right
+        1.0, 1.0, 1.0,    1, 1,
+        1.0, -1.0, 1.0,   0, 1,
+        1.0, -1.0, -1.0,  0, 0,
+        1.0, 1.0, -1.0,   1, 0,
+
+        // Front
+        1.0, 1.0, 1.0,    1, 1,
+        1.0, -1.0, 1.0,    1, 0,
+        -1.0, -1.0, 1.0,    0, 0,
+        -1.0, 1.0, 1.0,    0, 1,
+
+        // Back
+        1.0, 1.0, -1.0,    0, 0,
+        1.0, -1.0, -1.0,    0, 1,
+        -1.0, -1.0, -1.0,    1, 1,
+        -1.0, 1.0, -1.0,    1, 0,
+
+        // Bottom
+        -1.0, -1.0, -1.0,   1, 1,
+        -1.0, -1.0, 1.0,    1, 0,
+        1.0, -1.0, 1.0,     0, 0,
+        1.0, -1.0, -1.0,    0, 1,
     ];
 
-    let triangleVertexBuffer = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, triangleVertexBuffer);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(triangleVertices), context.STATIC_DRAW);
+    let boxIndices =
+        [
+            // Top
+            0, 1, 2,
+            0, 2, 3,
+
+            // Left
+            5, 4, 6,
+            6, 4, 7,
+
+            // Right
+            8, 9, 10,
+            8, 10, 11,
+
+            // Front
+            13, 12, 14,
+            15, 14, 12,
+
+            // Back
+            16, 17, 18,
+            16, 18, 19,
+
+            // Bottom
+            21, 20, 22,
+            22, 20, 23
+        ];
+
+    let boxVertexBuffer = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, boxVertexBuffer);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(boxVertices), context.STATIC_DRAW);
+
+    let boxIndexBuffer = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, boxIndexBuffer);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), context.STATIC_DRAW);
 
     let positionAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
-    let colorAttributeLocation = context.getAttribLocation(shaderProgram, "vertColor");
+    let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
 
     context.vertexAttribPointer(
         positionAttributeLocation, //Attribute location
         3, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        6*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
         0 //offset
     );
 
     context.vertexAttribPointer(
-        colorAttributeLocation, //Attribute location
-        3, //number of elements per Attribute
+        texCoordAttributeLocation, //Attribute location
+        2, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        6*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
+        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
         3*Float32Array.BYTES_PER_ELEMENT //offset
     );
 
     context.enableVertexAttribArray(positionAttributeLocation);
-    context.enableVertexAttribArray(colorAttributeLocation);
+    context.enableVertexAttribArray(texCoordAttributeLocation);
+
+    //
+    // Create texture
+    //
+
+    let boxTexture = context.createTexture();
+    context.bindTexture(context.TEXTURE_2D, boxTexture);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
+
+    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, document.getElementById("crate-image"));
+
+    context.bindTexture(context.TEXTURE_2D, null);
 
     //Tell WebGL what program should have the uniforms
     context.useProgram(shaderProgram);
@@ -135,27 +216,36 @@ function initWebGL(){
     //
     // Main loop
     //
+    let xRotationMatrix = new Float32Array(16);
+    let yRotationMatrix = new Float32Array(16);
+
     let identityMatrix = new Float32Array(16);
     mat4.identity(identityMatrix);
     let angle = 0;
+
     let loop = function(){
         angle = performance.now() /1000/6*2*Math.PI;
-        mat4.rotate(worldMatrix, identityMatrix, angle, [0,1,0]);
+        mat4.rotate(yRotationMatrix, identityMatrix, angle, [0,1,0]);
+        mat4.rotate(xRotationMatrix, identityMatrix, angle/4, [1,0,0]);
+
+        mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
         context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
 
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
-        context.drawArrays(
+        context.bindTexture(context.TEXTURE_2D, boxTexture);
+        context.activeTexture(context.TEXTURE0);
+
+        context.drawElements(
             context.TRIANGLES,
-            0, //offset of vertices
-            3  //how many verts to draw
+            boxIndices.length,
+            context.UNSIGNED_SHORT,
+            0
         );
         requestAnimationFrame(loop);
     };
+
     requestAnimationFrame(loop);
-
-
-
 
 }
