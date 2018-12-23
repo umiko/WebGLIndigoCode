@@ -1,31 +1,40 @@
-const vertexShaderCode = [
-    'precision mediump float;',
-    '',
-    'attribute vec3 vertPosition;',
-    'attribute vec2 vertTexCoord;',
-    'varying vec2 fragTexCoord;',
-    'uniform mat4 mWorld;',
-    'uniform mat4 mView;',
-    'uniform mat4 mProj;',
-    '',
-    'void main(){',
-    '   fragTexCoord = vertTexCoord;',
-    '   gl_Position= mProj * mView * mWorld * vec4(vertPosition, 1.0);',
-    '}'
-].join('\n');
+function LoadResources(){
+    loadTextResource('./resource/shader/shader.vert', function (vertErr, vertText) {
+        if(vertErr){
+            alert("Fatal Error getting Vertex shader");
+            console.error(vertErr);
+        }else{
+            console.log("vert loaded");
+            loadTextResource('./resource/shader/shader.frag', function (fragErr, fragText) {
+                if (fragErr) {
+                    alert("Fatal Error getting Fragment shader");
+                    console.error(fragErr);
+                }else{
+                    console.log("frag loaded");
+                    loadJSONResource('./resource/model/susan.json', function (modelErr, modelObj) {
+                        if(modelErr){
+                            alert("Fatal Error getting model");
+                            console.error(modelErr);
+                        }else{
+                            console.log("model loaded");
+                            loadImage('./resource/texture/susanTexture.png', function (textureErr, texture) {
+                                if(textureErr){
+                                    alert("Fatal Error getting texture");
+                                    console.error(textureErr);
+                                }else{
+                                    console.log("texture loaded");
+                                    RunWebGL(vertText, fragText, modelObj, texture);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
 
-const fragmentShaderCode = [
-    'precision mediump float;',
-    '',
-    'varying vec2 fragTexCoord;',
-    'uniform sampler2D sampler;',
-    '',
-    'void main(){',
-    '   gl_FragColor = texture2D(sampler, fragTexCoord);',
-    '}'
-].join('\n');
-
-function initWebGL(){
+function RunWebGL(vertText, fragText, susanModel, texture){
     console.log('Initializing WebGL...');
     let canvas = document.getElementById("viewport");
     let context = canvas.getContext('webgl');
@@ -46,8 +55,8 @@ function initWebGL(){
     let vertexShader = context.createShader(context.VERTEX_SHADER);
     let fragmentShader = context.createShader(context.FRAGMENT_SHADER);
 
-    context.shaderSource(vertexShader, vertexShaderCode);
-    context.shaderSource(fragmentShader, fragmentShaderCode);
+    context.shaderSource(vertexShader, vertText);
+    context.shaderSource(fragmentShader, fragText);
 
     context.compileShader(vertexShader);
     if(!context.getShaderParameter(vertexShader, context.COMPILE_STATUS)){
@@ -81,116 +90,58 @@ function initWebGL(){
     //
     //
 
-    let boxVertices = [
-        //X,Y, Z           U,V
-        // Top
-        -1.0, 1.0, -1.0,   0, 0,
-        -1.0, 1.0, 1.0,    0, 1,
-        1.0, 1.0, 1.0,     1, 1,
-        1.0, 1.0, -1.0,    1, 0,
+    let susanVertices = susanModel.meshes[0].vertices;
+    let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
 
-        // Left
-        -1.0, 1.0, 1.0,    0, 0,
-        -1.0, -1.0, 1.0,   1, 0,
-        -1.0, -1.0, -1.0,  1, 1,
-        -1.0, 1.0, -1.0,   0, 1,
+    let susanVertexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanVertices), context.STATIC_DRAW);
 
-        // Right
-        1.0, 1.0, 1.0,    1, 1,
-        1.0, -1.0, 1.0,   0, 1,
-        1.0, -1.0, -1.0,  0, 0,
-        1.0, 1.0, -1.0,   1, 0,
+    let susanTexCoordVertexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordVertexBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanTexCoords), context.STATIC_DRAW);
 
-        // Front
-        1.0, 1.0, 1.0,    1, 1,
-        1.0, -1.0, 1.0,    1, 0,
-        -1.0, -1.0, 1.0,    0, 0,
-        -1.0, 1.0, 1.0,    0, 1,
+    let susanIndexBuffer = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, susanIndexBuffer);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(susanIndices), context.STATIC_DRAW);
 
-        // Back
-        1.0, 1.0, -1.0,    0, 0,
-        1.0, -1.0, -1.0,    0, 1,
-        -1.0, -1.0, -1.0,    1, 1,
-        -1.0, 1.0, -1.0,    1, 0,
-
-        // Bottom
-        -1.0, -1.0, -1.0,   1, 1,
-        -1.0, -1.0, 1.0,    1, 0,
-        1.0, -1.0, 1.0,     0, 0,
-        1.0, -1.0, -1.0,    0, 1,
-    ];
-
-    let boxIndices =
-        [
-            // Top
-            0, 1, 2,
-            0, 2, 3,
-
-            // Left
-            5, 4, 6,
-            6, 4, 7,
-
-            // Right
-            8, 9, 10,
-            8, 10, 11,
-
-            // Front
-            13, 12, 14,
-            15, 14, 12,
-
-            // Back
-            16, 17, 18,
-            16, 18, 19,
-
-            // Bottom
-            21, 20, 22,
-            22, 20, 23
-        ];
-
-    let boxVertexBuffer = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, boxVertexBuffer);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(boxVertices), context.STATIC_DRAW);
-
-    let boxIndexBuffer = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, boxIndexBuffer);
-    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), context.STATIC_DRAW);
-
-    let positionAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
-    let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
-
+    context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject)
+    let vertAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
     context.vertexAttribPointer(
-        positionAttributeLocation, //Attribute location
+        vertAttributeLocation, //Attribute location
         3, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+        3*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
         0 //offset
     );
+    context.enableVertexAttribArray(vertAttributeLocation);
 
+    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordVertexBufferObject);
+    let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
     context.vertexAttribPointer(
         texCoordAttributeLocation, //Attribute location
         2, //number of elements per Attribute
         context.FLOAT, //type of elements
         false, //normalization
-        5*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
-        3*Float32Array.BYTES_PER_ELEMENT //offset
+        2*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
+        0*Float32Array.BYTES_PER_ELEMENT //offset
     );
-
-    context.enableVertexAttribArray(positionAttributeLocation);
     context.enableVertexAttribArray(texCoordAttributeLocation);
 
     //
     // Create texture
     //
 
-    let boxTexture = context.createTexture();
-    context.bindTexture(context.TEXTURE_2D, boxTexture);
+    let susanTexture = context.createTexture();
+    context.bindTexture(context.TEXTURE_2D, susanTexture);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
 
-    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, document.getElementById("crate-image"));
+    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, texture);
 
     context.bindTexture(context.TEXTURE_2D, null);
 
@@ -226,20 +177,19 @@ function initWebGL(){
     let loop = function(){
         angle = performance.now() /1000/6*2*Math.PI;
         mat4.rotate(yRotationMatrix, identityMatrix, angle, [0,1,0]);
-        mat4.rotate(xRotationMatrix, identityMatrix, angle/4, [1,0,0]);
-
+        mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
         mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
         context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
 
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
-        context.bindTexture(context.TEXTURE_2D, boxTexture);
+        context.bindTexture(context.TEXTURE_2D, susanTexture);
         context.activeTexture(context.TEXTURE0);
 
         context.drawElements(
             context.TRIANGLES,
-            boxIndices.length,
+            susanIndices.length,
             context.UNSIGNED_SHORT,
             0
         );

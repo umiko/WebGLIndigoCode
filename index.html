@@ -5,13 +5,14 @@
         <title>Following IndigoCode's Tutorial</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.7.1/gl-matrix-min.js"></script>
     </head>
-    <body onload="initWebGL();">
+    <body onload="LoadResources()">
         <canvas width="640" height="480" id="viewport">
             Ayy, your browser is shite
         </canvas>
         <br/>
         <i>WebGL Above! Wear a Hardhat!</i>
         <!-- <img id="crate-image" src="resource/texture/crate.png" width="0" height="0" alt="crate"/> -->
+        <script src="util.js"></script>
         <script src="WebGL.js"></script>
         <!--script loaded after the canvas, so i can work with it -->
     </body>
