@@ -9,7 +9,7 @@ varying vec2 fragTexCoord;
 uniform mat4 mWorld;
 uniform mat4 mView;
 uniform mat4 mProj;
-//ofcourse, webgl cant do basic shit like transposing or inverting, so the cpu has to
+//ofcourse webgl cant do basic shit like transposing or inverting, so the cpu has to
 uniform mat4 mNormal;
 
 void main(){
