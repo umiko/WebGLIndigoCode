@@ -11,13 +11,13 @@ function LoadResources(){
                     console.error(fragErr);
                 }else{
                     console.log("frag loaded");
-                    loadJSONResource('./resource/model/susan.json', function (modelErr, modelObj) {
+                    loadJSONResource('./resource/model/stanford_dragon.json', function (modelErr, modelObj) {
                         if(modelErr){
                             alert("Fatal Error getting model");
                             console.error(modelErr);
                         }else{
                             console.log("model loaded");
-                            loadImage('./resource/texture/susanTexture.png', function (textureErr, texture) {
+                            loadImage('./resource/texture/jade.png', function (textureErr, texture) {
                                 if(textureErr){
                                     alert("Fatal Error getting texture");
                                     console.error(textureErr);
@@ -41,6 +41,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     model = susanModel;
     console.log('Initializing WebGL...');
     let canvas = document.getElementById("viewport");
+    //resizeCanvas(canvas);
     let context = canvas.getContext('webgl');
 
     if(!context){
@@ -92,7 +93,9 @@ function RunWebGL(vertText, fragText, susanModel, texture){
 
     let susanVertices = susanModel.meshes[0].vertices;
     let susanNormals = susanModel.meshes[0].normals;
-    let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    let susanTexCoords = Array(susanVertices.length);
+
     let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
 
     let susanVertexBufferObject = context.createBuffer();
@@ -174,7 +177,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let matNormUniformLocation = context.getUniformLocation(shaderProgram, "mNormal");
 
     let lightPos = new Float32Array([10.0, 10.0, -10.0]);
-    let viewPos = new Float32Array([0,0,-5]);
+    let viewPos = new Float32Array([0,5,-15]);
     let worldMatrix = new Float32Array(16);
     let viewMatrix = new Float32Array(16);
     let projMatrix = new Float32Array(16);
@@ -182,7 +185,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
 
 
     mat4.identity(worldMatrix);
-    mat4.lookAt(viewMatrix, viewPos, [0,0,0], [0,1,0]);
+    mat4.lookAt(viewMatrix, viewPos, [0,5,0], [0,1,0]);
     mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, .1, 1000.0);
 
     context.uniform3fv(lightPosUniformLocation, lightPos);
@@ -198,13 +201,16 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let yRotationMatrix = new Float32Array(16);
     let identityMatrix = new Float32Array(16);
     mat4.identity(identityMatrix);
+    mat4.identity(xRotationMatrix);
+    mat4.identity(yRotationMatrix);
+
 
     let angle = 0;
 
     let loop = function(){
         angle = performance.now() /1000/6*2*Math.PI;
-        mat4.rotate(yRotationMatrix, identityMatrix, angle, [0,1,0]);
-        mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
+        mat4.rotate(yRotationMatrix, identityMatrix, angle/4, [0,1,0]);
+        //mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
         mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
         mat4.invert(normalMatrix, worldMatrix);
@@ -212,7 +218,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
         context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
         context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
 
-
+        //resizeCanvas(canvas);
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
         context.bindTexture(context.TEXTURE_2D, susanTexture);

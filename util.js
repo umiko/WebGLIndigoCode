@@ -33,3 +33,8 @@ var loadJSONResource = function (url, callback) {
         }
     });
 };
+
+var resizeCanvas = function(canvas){
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+};
