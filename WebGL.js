@@ -37,7 +37,10 @@ function LoadResources(){
 
 var model;
 
+var test = new DrawableObject(['./resource/shader/shader.vert']);
+
 function RunWebGL(vertText, fragText, susanModel, texture){
+    test.loadResources();
     model = susanModel;
     console.log('Initializing WebGL...');
     let canvas = document.getElementById("viewport");
@@ -94,6 +97,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let susanVertices = susanModel.meshes[0].vertices;
     let susanNormals = susanModel.meshes[0].normals;
     //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    //the dragon has no Texcoords, give it an empty array so it can use the color texture
     let susanTexCoords = Array(susanVertices.length);
 
     let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
@@ -176,7 +180,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let matProjUniformLocation = context.getUniformLocation(shaderProgram, "mProj");
     let matNormUniformLocation = context.getUniformLocation(shaderProgram, "mNormal");
 
-    let lightPos = new Float32Array([10.0, 10.0, -10.0]);
+    let lightPos = new Float32Array([100.0, 100.0, -100.0]);
     let viewPos = new Float32Array([0,5,-15]);
     let worldMatrix = new Float32Array(16);
     let viewMatrix = new Float32Array(16);

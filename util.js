@@ -1,6 +1,6 @@
 // Load a text resource from a file over the network
-var loadTextResource = function (url, callback) {
-    var request = new XMLHttpRequest();
+const loadTextResource = function (url, callback) {
+    let request = new XMLHttpRequest();
     request.open('GET', url + '?please-dont-cache=' + Math.random(), true);
     request.onload = function () {
         if (request.status < 200 || request.status > 299) {
@@ -12,15 +12,15 @@ var loadTextResource = function (url, callback) {
     request.send();
 };
 
-var loadImage = function (url, callback) {
-    var image = new Image();
+const loadImage = function (url, callback) {
+    let image = new Image();
     image.onload = function () {
         callback(null, image);
     };
     image.src = url;
 };
 
-var loadJSONResource = function (url, callback) {
+const loadJSONResource = function (url, callback) {
     loadTextResource(url, function (err, result) {
         if (err) {
             callback(err);
@@ -34,7 +34,7 @@ var loadJSONResource = function (url, callback) {
     });
 };
 
-var resizeCanvas = function(canvas){
+const resizeCanvas = function(canvas){
     canvas.width=window.innerWidth;
     canvas.height=window.innerHeight;
 };
