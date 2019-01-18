@@ -11,5 +11,6 @@
     <orderEntry type="library" name="gl-matrix" level="application" />
     <orderEntry type="library" name="gl-matrix" level="application" />
     <orderEntry type="library" name="async" level="application" />
+    <orderEntry type="library" name="async" level="application" />
   </component>
 </module>

@@ -40,7 +40,7 @@ var model;
 var test = new DrawableObject(['./resource/shader/shader.vert'], ['./resource/shader/shader.frag']);
 
 function RunWebGL(vertText, fragText, susanModel, texture){
-    test.loadResources();
+    //test.loadResources();
     model = susanModel;
     console.log('Initializing WebGL...');
     let canvas = document.getElementById("viewport");
@@ -179,6 +179,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let matViewUniformLocation = context.getUniformLocation(shaderProgram,"mView");
     let matProjUniformLocation = context.getUniformLocation(shaderProgram, "mProj");
     let matNormUniformLocation = context.getUniformLocation(shaderProgram, "mNormal");
+    let matMVPUniformLocation = context.getUniformLocation(shaderProgram, "mvp");
 
     let lightPos = new Float32Array([100.0, 100.0, -100.0]);
     let viewPos = new Float32Array([0,5,-15]);
@@ -208,6 +209,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     mat4.identity(xRotationMatrix);
     mat4.identity(yRotationMatrix);
 
+    let mvp = new Float32Array(16);
 
     let angle = 0;
 
@@ -221,6 +223,10 @@ function RunWebGL(vertText, fragText, susanModel, texture){
         mat4.transpose(normalMatrix,normalMatrix);
         context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
         context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
+
+        mat4.mul(mvp, projMatrix, viewMatrix);
+        mat4.mul(mvp, mvp, worldMatrix);
+        context.uniformMatrix4fv(matMVPUniformLocation, context.FALSE, mvp);
 
         //resizeCanvas(canvas);
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
