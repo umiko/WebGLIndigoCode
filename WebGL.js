@@ -37,7 +37,7 @@ function LoadResources(){
 
 var model;
 
-var test = new DrawableObject(['./resource/shader/shader.vert']);
+var test = new DrawableObject(['./resource/shader/shader.vert'], ['./resource/shader/shader.frag']);
 
 function RunWebGL(vertText, fragText, susanModel, texture){
     test.loadResources();
