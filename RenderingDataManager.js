@@ -1,7 +1,9 @@
-class DrawableObjectShaderManager{
-    constructor(DrawableObject){
-        this.owner = DrawableObject;
+///This Class is supposed to manage the drawable object data, such as meshes, textures, shaders and their bufers and whatnot
+class RenderingDataManager{
+    constructor(context){
+        this.context = context;
         this.currentShader = null;
+        this.drawableObjects = null;
     }
 
     loadShaderCodeFromFiles(ShaderFilePathArray){
@@ -22,10 +24,12 @@ class DrawableObjectShaderManager{
         this.currentShader = shader;
     }
 
-    static createShaderFilepathPair(vertexShaderFilePath, fragmentShaderFilePath){
+    #createShaderFilepathPair(vertexShaderFilePath, fragmentShaderFilePath){
         let filePair = {};
         filePair['vertexShaderFilePath'] = vertexShaderFilePath;
         filePair['fragmentShaderFilePath'] = fragmentShaderFilePath;
         return filePair;
     }
+
+
 }
