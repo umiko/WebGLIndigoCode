@@ -1,5 +1,5 @@
 // Load a text resource from a file over the network
-const loadTextResource = function (url, callback) {
+const loadTextResourceFromFile = function (url, callback) {
     let request = new XMLHttpRequest();
     request.open('GET', url + '?please-dont-cache=' + Math.random(), true);
     request.onload = function () {
@@ -21,7 +21,7 @@ const loadImage = function (url, callback) {
 };
 
 const loadJSONResource = function (url, callback) {
-    loadTextResource(url, function (err, result) {
+    loadTextResourceFromFile(url, function (err, result) {
         if (err) {
             callback(err);
         } else {

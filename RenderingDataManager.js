@@ -1,4 +1,4 @@
-///This Class is supposed to manage the drawable object data, such as meshes, textures, shaders and their bufers and whatnot
+///This Class is supposed to manage the drawable object data, such as meshes, textures, shaders and their buffers and whatnot
 class RenderingDataManager{
     constructor(context){
         this.context = context;
@@ -8,7 +8,7 @@ class RenderingDataManager{
 
     loadShaderCodeFromFiles(ShaderFilePathArray){
         this.shaderCodeArray = Array(ShaderFilePathArray.length);
-        ShaderFilePathArray.map(filePath => loadTextResource(filePath,function(err, result){
+        ShaderFilePathArray.map(filePath => loadTextResourceFromFile(filePath,function(err, result){
             if(err)
                 console.error(err);
             else
@@ -30,6 +30,4 @@ class RenderingDataManager{
         filePair['fragmentShaderFilePath'] = fragmentShaderFilePath;
         return filePair;
     }
-
-
 }

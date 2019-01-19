@@ -1,11 +1,11 @@
 function LoadResources(){
-    loadTextResource('./resource/shader/shader.vert', function (vertErr, vertText) {
+    loadTextResourceFromFile('./resource/shader/shader.vert', function (vertErr, vertText) {
         if(vertErr){
             alert("Fatal Error getting Vertex shader");
             console.error(vertErr);
         }else{
             console.log("vert loaded");
-            loadTextResource('./resource/shader/shader.frag', function (fragErr, fragText) {
+            loadTextResourceFromFile('./resource/shader/shader.frag', function (fragErr, fragText) {
                 if (fragErr) {
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
