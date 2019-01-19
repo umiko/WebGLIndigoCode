@@ -13,17 +13,9 @@ class DrawableObject{
         this.texturePath = texturePath;
     }
 
-    loadResources(){
+    initializeObject(){
         let that = this;
-        this.vertexShaderCode = load
-        async.map(this.fragmentShaderPaths, loadTextResource, function(err, result){
-            if(err){
-                console.log(err);
-            }
-            else{
-                that.fragmentShaderCode.push(result);
-            }
-        });
+
         console.log(3);
     }
 

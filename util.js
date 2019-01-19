@@ -38,3 +38,12 @@ const resizeCanvas = function(canvas){
     canvas.width=window.innerWidth;
     canvas.height=window.innerHeight;
 };
+
+const extractFilename = function (filepath) {
+    return filepath.substring(filepath.lastIndexOf('/')+1, filepath.length);
+};
+
+const extractFilenameWithoutExtension = function (filepath) {
+    filepath = extractFilename(filepath);
+    return filepath.substring(0, filepath.lastIndexOf('.'));
+};

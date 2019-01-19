@@ -1,6 +1,7 @@
-class ShaderManager{
+class DrawableObjectShaderManager{
     constructor(DrawableObject){
         this.owner = DrawableObject;
+        this.currentShader = null;
     }
 
     loadShaderCodeFromFiles(ShaderFilePathArray){
@@ -9,8 +10,22 @@ class ShaderManager{
             if(err)
                 console.error(err);
             else
-                shaderCodeArray.push(result);
+                this.shaderCodeArray.push(result);
         }));
-        return shaderCodeArray;
+    }
+
+    getCurrentShader(){
+        return this.currentShader
+    }
+
+    setCurrentShader(shader){
+        this.currentShader = shader;
+    }
+
+    static createShaderFilepathPair(vertexShaderFilePath, fragmentShaderFilePath){
+        let filePair = {};
+        filePair['vertexShaderFilePath'] = vertexShaderFilePath;
+        filePair['fragmentShaderFilePath'] = fragmentShaderFilePath;
+        return filePair;
     }
 }
