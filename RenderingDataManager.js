@@ -2,34 +2,57 @@
 class RenderingDataManager{
     constructor(context){
         this.context = context;
-        this.currentShader = null;
-        this.drawableObjects = null;
-    }
-
-    loadShaderCodeFromFiles(ShaderFilePathArray){
-        let shaderCodeArray = Array(ShaderFilePathArray.length);
-        ShaderFilePathArray.map(filePath => loadTextResourceFromFile(filePath,function(err, result){
-            if(err)
-                console.error(err);
-            else
-                shaderCodeArray.push(result);
-        }));
-        return shaderCodeArray;
+        this.activeShader = null;
     }
 
     getCurrentShader(){
-        return this.currentShader
+        return this.activeShader
     }
 
     setCurrentShader(shader){
-        this.currentShader = shader;
+        this.activeShader = shader;
     }
 
-    #createShaderFilepathPair(vertexShaderFilePath, fragmentShaderFilePath){
-        let filePair = {};
-        filePair['vertexShaderFilePath'] = vertexShaderFilePath;
-        filePair['fragmentShaderFilePath'] = fragmentShaderFilePath;
-        return filePair;
+
+
+    //<editor-fold desc="Shader Compilation and Linking">
+
+    #initializeShaderArray(vertexShaderPathArray, fragmentShaderPathArray){
+        let shaderCodeArray = this.#loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray);
+        let shaderArray = new Array(shaderCodeArray.length);
+        for(let shaderArrayIndex = 0; shaderArrayIndex<shaderCodeArray.length; shaderArrayIndex++){
+            shaderArray.push(this.#createShaderProgram(shaderCodeArray[shaderArrayIndex][0], shaderCodeArray[shaderArrayIndex][1]));
+        }
+        return shaderArray;
+    }
+
+    #loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray){
+        this.#checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray);
+        let shaderCodeArray = new Array(vertexShaderPathArray.length);
+        for (let shaderCodeIndex = 0; shaderCodeIndex < vertexShaderPathArray.length; shaderCodeIndex++){
+            shaderCodeArray.push(this.#loadMatchingShaderCodeFiles(vertexShaderPathArray[shaderCodeIndex], fragmentShaderPathArray[shaderCodeIndex]));
+        }
+        return shaderCodeArray;
+    }
+
+    #checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray) {
+        if (vertexShaderPathArray.length !== fragmentShaderPathArray.length)
+            throw new Error("Error in Shader Arguments! Vertex and Fragment");
+    }
+
+    #loadMatchingShaderCodeFiles(vertexShaderPath, fragmentShaderPath){
+        let vertexShaderCode = this.loadShaderCodeFromFile(vertexShaderPath);
+        let fragmentShaderCode = this.loadShaderCodeFromFile(fragmentShaderPath);
+        return {vertexShaderCode, fragmentShaderCode};
+    }
+
+    loadShaderCodeFromFile(ShaderFilePath){
+        loadTextResourceFromFile(ShaderFilePath, function (err, result) {
+            if (err)
+                throw new Error(err);
+            else
+                return result;
+        });
     }
 
     #createShaderProgram(vertexCode, fragmentCode){
@@ -56,6 +79,8 @@ class RenderingDataManager{
         this.#checkProgramLinkStatus(shaderProgram);
         return shaderProgram;
     }
+
+    //</editor-fold>
 
     //<editor-fold desc="Shader Validation">
 
