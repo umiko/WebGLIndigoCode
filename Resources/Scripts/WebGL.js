@@ -35,9 +35,9 @@ function LoadResources(){
 }
 
 
-var model;
+let model;
 
-var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
+const test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
 function RunWebGL(vertText, fragText, susanModel, texture){
     //test.loadResources();
@@ -46,8 +46,6 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let canvas = document.getElementById("viewport");
     //resizeCanvas(canvas);
     let context = canvas.getContext('webgl');
-
-    console.log(util.randomStringGenerator("asjdh"));
 
     if(!context){
         context = canvas.getContext('experimental-webgl');

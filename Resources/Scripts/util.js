@@ -46,7 +46,7 @@ class util {
     };
 
     static extractFilenameWithoutExtension(filepath) {
-        filepath = extractFilename(filepath);
+        filepath = util.extractFilename(filepath);
         return filepath.substring(0, filepath.lastIndexOf('.'));
     };
 
@@ -60,5 +60,6 @@ class util {
         return text;
     };
 }
-
-module.exports = util;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = util;
+}

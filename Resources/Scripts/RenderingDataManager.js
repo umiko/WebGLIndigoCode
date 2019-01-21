@@ -1,4 +1,3 @@
-///This Class is supposed to manage the drawable object data, such as meshes, textures, shaders and their buffers and whatnot
 class RenderingDataManager{
     constructor(context){
         this.context = context;
@@ -19,23 +18,18 @@ class RenderingDataManager{
         let shaderCodeArray = this.loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray);
         let shaderArray = new Array(shaderCodeArray.length);
         for(let shaderArrayIndex = 0; shaderArrayIndex<shaderCodeArray.length; shaderArrayIndex++){
-            shaderArray.push(this.#createShaderProgram(shaderCodeArray[shaderArrayIndex][0], shaderCodeArray[shaderArrayIndex][1]));
+            shaderArray.push(this.createShaderProgram(shaderCodeArray[shaderArrayIndex][0], shaderCodeArray[shaderArrayIndex][1]));
         }
         return shaderArray;
     }
 
     loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray){
-        this.checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray);
+        this.checkForArrayLengthInequality(vertexShaderPathArray, fragmentShaderPathArray);
         let shaderCodeArray = new Array(vertexShaderPathArray.length);
         for (let shaderCodeIndex = 0; shaderCodeIndex < vertexShaderPathArray.length; shaderCodeIndex++){
             shaderCodeArray.push(this.loadMatchingShaderCodeFiles(vertexShaderPathArray[shaderCodeIndex], fragmentShaderPathArray[shaderCodeIndex]));
         }
         return shaderCodeArray;
-    }
-
-    checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray) {
-        if (vertexShaderPathArray.length !== fragmentShaderPathArray.length)
-            throw new Error("Error in Shader Arguments! Vertex and Fragment");
     }
 
     loadMatchingShaderCodeFiles(vertexShaderPath, fragmentShaderPath){
@@ -92,6 +86,11 @@ class RenderingDataManager{
         if(!this.context.getProgramParameter(shaderProgram, this.context.LINK_STATUS)){
             throw new Error("Error linking program!\n" + this.context.getProgramInfoLog(shaderProgram));
         }
+    }
+
+    checkForArrayLengthInequality(vertexShaderPathArray, fragmentShaderPathArray) {
+        if (vertexShaderPathArray.length !== fragmentShaderPathArray.length)
+            throw new Error("Error in Shader Arguments! Vertex and Fragment");
     }
 
     validateShaderProgram(shaderProgram){
