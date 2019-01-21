@@ -1,23 +1,23 @@
 function LoadResources(){
-    loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
+    util.loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
         if(vertErr){
             alert("Fatal Error getting Vertex shader");
             console.error(vertErr);
         }else{
             console.log("vert loaded");
-            loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
+            util.loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
                 if (fragErr) {
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
                 }else{
                     console.log("frag loaded");
-                    loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
+                    util.loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
                         if(modelErr){
                             alert("Fatal Error getting model");
                             console.error(modelErr);
                         }else{
                             console.log("model loaded");
-                            loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
+                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
                                 if(textureErr){
                                     alert("Fatal Error getting texture");
                                     console.error(textureErr);
@@ -46,6 +46,8 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let canvas = document.getElementById("viewport");
     //resizeCanvas(canvas);
     let context = canvas.getContext('webgl');
+
+    console.log(util.randomStringGenerator("asjdh"));
 
     if(!context){
         context = canvas.getContext('experimental-webgl');
