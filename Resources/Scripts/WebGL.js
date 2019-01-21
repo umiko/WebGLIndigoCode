@@ -1,23 +1,23 @@
 function LoadResources(){
-    loadTextResourceFromFile('./resource/shader/shader.vert', function (vertErr, vertText) {
+    loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
         if(vertErr){
             alert("Fatal Error getting Vertex shader");
             console.error(vertErr);
         }else{
             console.log("vert loaded");
-            loadTextResourceFromFile('./resource/shader/shader.frag', function (fragErr, fragText) {
+            loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
                 if (fragErr) {
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
                 }else{
                     console.log("frag loaded");
-                    loadJSONResource('./resource/model/stanford_dragon.json', function (modelErr, modelObj) {
+                    loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
                         if(modelErr){
                             alert("Fatal Error getting model");
                             console.error(modelErr);
                         }else{
                             console.log("model loaded");
-                            loadImage('./resource/texture/jade.png', function (textureErr, texture) {
+                            loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
                                 if(textureErr){
                                     alert("Fatal Error getting texture");
                                     console.error(textureErr);
@@ -37,7 +37,7 @@ function LoadResources(){
 
 var model;
 
-var test = new DrawableObject(['./resource/shader/shader.vert'], ['./resource/shader/shader.frag']);
+var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
 function RunWebGL(vertText, fragText, susanModel, texture){
     //test.loadResources();
@@ -68,13 +68,13 @@ function RunWebGL(vertText, fragText, susanModel, texture){
 
     context.compileShader(vertexShader);
     if(!context.getShaderParameter(vertexShader, context.COMPILE_STATUS)){
-        console.error("Error compiling vertex shader!", context.getShaderInfoLog(vertexShader));
+        console.error("Error compiling vertex Shaders!", context.getShaderInfoLog(vertexShader));
         return;
     }
 
     context.compileShader(fragmentShader);
     if(!context.getShaderParameter(fragmentShader, context.COMPILE_STATUS)){
-        console.error("Error compiling fragment shader!", context.getShaderInfoLog(fragmentShader));
+        console.error("Error compiling fragment Shaders!", context.getShaderInfoLog(fragmentShader));
         return;
     }
 
@@ -97,7 +97,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let susanVertices = susanModel.meshes[0].vertices;
     let susanNormals = susanModel.meshes[0].normals;
     //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
-    //the dragon has no Texcoords, give it an empty array so it can use the color texture
+    //the dragon has no Texcoords, give it an empty array so it can use the color Textures
     let susanTexCoords = Array(susanVertices.length);
 
     let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
@@ -156,7 +156,7 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     context.enableVertexAttribArray(texCoordAttributeLocation);
 
     //
-    // Create texture
+    // Create Textures
     //
 
     let susanTexture = context.createTexture();

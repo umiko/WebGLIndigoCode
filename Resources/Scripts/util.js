@@ -1,10 +1,10 @@
-// Load a text resource from a file over the network
+// Load a text Resources from a file over the network
 const loadTextResourceFromFile = function (url, callback) {
     let request = new XMLHttpRequest();
     request.open('GET', url + '?please-dont-cache=' + Math.random(), true);
     request.onload = function () {
         if (request.status < 200 || request.status > 299) {
-            callback('Error: HTTP Status ' + request.status + ' on resource ' + url);
+            callback('Error: HTTP Status ' + request.status + ' on Resources ' + url);
         } else {
             callback(null, request.responseText);
         }

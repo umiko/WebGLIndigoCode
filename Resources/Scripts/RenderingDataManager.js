@@ -13,8 +13,6 @@ class RenderingDataManager{
         this.activeShader = shader;
     }
 
-
-
     //<editor-fold desc="Shader Compilation and Linking">
 
     #initializeShaderArray(vertexShaderPathArray, fragmentShaderPathArray){
@@ -41,12 +39,12 @@ class RenderingDataManager{
     }
 
     #loadMatchingShaderCodeFiles(vertexShaderPath, fragmentShaderPath){
-        let vertexShaderCode = this.loadShaderCodeFromFile(vertexShaderPath);
-        let fragmentShaderCode = this.loadShaderCodeFromFile(fragmentShaderPath);
+        let vertexShaderCode = this.#loadShaderCodeFromFile(vertexShaderPath);
+        let fragmentShaderCode = this.#loadShaderCodeFromFile(fragmentShaderPath);
         return {vertexShaderCode, fragmentShaderCode};
     }
 
-    loadShaderCodeFromFile(ShaderFilePath){
+    #loadShaderCodeFromFile(ShaderFilePath){
         loadTextResourceFromFile(ShaderFilePath, function (err, result) {
             if (err)
                 throw new Error(err);
