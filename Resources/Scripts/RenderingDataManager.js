@@ -1,3 +1,36 @@
+///This Class is supposed to manage the drawable object data, such as meshes, textures, shaders and their buffers and whatnot
+class Model{
+    constructor(){
+        this.vertices = null;
+        this.normals = null;
+        this.textureCoordinates = null;
+        this.color = null;
+        this.indices = null;
+    }
+
+    addVertices(modelJSON){
+        if(modelJSON.meshes[0].vertices !== 'undefined'){
+            this.vertices = modelJSON.meshes[0].vertices;
+        }
+        else{
+            throw new Error("Error in Model Data! No Vertices!");
+        }
+    }
+
+    addTextureCoordinates(modelJSON){
+        if(modelJSON.meshes[0].texturecoords[0] !== 'undefined'){
+            this.textureCoordinates = modelJSON.meshes[0].texturecoords[0];
+        }
+        else{
+            console.warn("Warning for Model Data! No Texture Coordinates!");
+        }
+    }
+
+    addColor(modelJSON){
+
+    }
+}
+
 class RenderingDataManager{
     constructor(context){
         this.context = context;
@@ -12,6 +45,26 @@ class RenderingDataManager{
         this.activeShader = shader;
     }
 
+    loadModel(modelPath){
+        let that = this;
+        loadJSONResource(modelPath, function (err, result) {
+            if(err)
+                throw new Error("Error loading Model!");
+            else{
+                that.parseModelMesh(result);
+            }
+        });
+    }
+
+    parseModelMesh(modelJSON) {
+        let model = new Model();
+
+        model.vertices = modelJSON.meshes[0].vertices;
+        model.normals = modelJSON.meshes[0].normals;
+        model.textureCoordinates = modelJSON.meshes[0].texturecoords[0];
+        model.indices = [].concat.apply([], modelJSON.meshes[0].faces);
+    }
+    
     //<editor-fold desc="Shader Compilation and Linking">
 
     initializeShaderArray(vertexShaderPathArray, fragmentShaderPathArray){
@@ -24,12 +77,17 @@ class RenderingDataManager{
     }
 
     loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray){
-        this.checkForArrayLengthInequality(vertexShaderPathArray, fragmentShaderPathArray);
+        this.checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray);
         let shaderCodeArray = new Array(vertexShaderPathArray.length);
         for (let shaderCodeIndex = 0; shaderCodeIndex < vertexShaderPathArray.length; shaderCodeIndex++){
             shaderCodeArray.push(this.loadMatchingShaderCodeFiles(vertexShaderPathArray[shaderCodeIndex], fragmentShaderPathArray[shaderCodeIndex]));
         }
         return shaderCodeArray;
+    }
+
+    checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray) {
+        if (vertexShaderPathArray.length !== fragmentShaderPathArray.length)
+            throw new Error("Error in Shader Arguments! Vertex and Fragment");
     }
 
     loadMatchingShaderCodeFiles(vertexShaderPath, fragmentShaderPath){
@@ -39,7 +97,7 @@ class RenderingDataManager{
     }
 
     loadShaderCodeFromFile(ShaderFilePath){
-        util.loadTextResourceFromFile(ShaderFilePath, function (err, result) {
+        loadTextResourceFromFile(ShaderFilePath, function (err, result) {
             if (err)
                 throw new Error(err);
             else
@@ -86,11 +144,6 @@ class RenderingDataManager{
         if(!this.context.getProgramParameter(shaderProgram, this.context.LINK_STATUS)){
             throw new Error("Error linking program!\n" + this.context.getProgramInfoLog(shaderProgram));
         }
-    }
-
-    checkForArrayLengthInequality(vertexShaderPathArray, fragmentShaderPathArray) {
-        if (vertexShaderPathArray.length !== fragmentShaderPathArray.length)
-            throw new Error("Error in Shader Arguments! Vertex and Fragment");
     }
 
     validateShaderProgram(shaderProgram){
