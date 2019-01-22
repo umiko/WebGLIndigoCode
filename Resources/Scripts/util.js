@@ -41,12 +41,12 @@ class util {
         canvas.height = window.innerHeight;
     };
 
-    static extractFilename(filepath) {
+    static extractFileName(filepath) {
         return filepath.substring(filepath.lastIndexOf('/') + 1, filepath.length);
     };
 
-    static extractFilenameWithoutExtension(filepath) {
-        filepath = util.extractFilename(filepath);
+    static extractFileNameWithoutExtension(filepath) {
+        filepath = util.extractFileName(filepath);
         return filepath.substring(0, filepath.lastIndexOf('.'));
     };
 
