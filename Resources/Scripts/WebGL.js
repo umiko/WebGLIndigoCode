@@ -11,13 +11,13 @@ function LoadResources(){
                     console.error(fragErr);
                 }else{
                     console.log("frag loaded");
-                    loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
+                    loadJSONResource('./Resources/Models/susan.json', function (modelErr, modelObj) {
                         if(modelErr){
                             alert("Fatal Error getting model");
                             console.error(modelErr);
                         }else{
                             console.log("model loaded");
-                            loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
+                            loadImage('./Resources/Textures/susanTexture.png', function (textureErr, texture) {
                                 if(textureErr){
                                     alert("Fatal Error getting texture");
                                     console.error(textureErr);
@@ -37,7 +37,7 @@ function LoadResources(){
 
 var model;
 
-var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
+//var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
 function RunWebGL(vertText, fragText, susanModel, texture){
     //test.loadResources();
@@ -96,9 +96,9 @@ function RunWebGL(vertText, fragText, susanModel, texture){
 
     let susanVertices = susanModel.meshes[0].vertices;
     let susanNormals = susanModel.meshes[0].normals;
-    //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    let susanTexCoords = susanModel.meshes[0].texturecoords[0];
     //the dragon has no Texcoords, give it an empty array so it can use the color Textures
-    let susanTexCoords = Array(susanVertices.length);
+    //let susanTexCoords = Array(susanVertices.length);
 
     let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
 
