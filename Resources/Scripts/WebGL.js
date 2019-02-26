@@ -1,29 +1,37 @@
 function LoadResources(){
-    loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
+    util.loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
         if(vertErr){
             alert("Fatal Error getting Vertex shader");
             console.error(vertErr);
         }else{
             console.log("vert loaded");
-            loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
+            util.loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
                 if (fragErr) {
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
                 }else{
                     console.log("frag loaded");
-                    loadJSONResource('./Resources/Models/susan.json', function (modelErr, modelObj) {
+                    util.loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
                         if(modelErr){
                             alert("Fatal Error getting model");
                             console.error(modelErr);
                         }else{
                             console.log("model loaded");
-                            loadImage('./Resources/Textures/susanTexture.png', function (textureErr, texture) {
+                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
                                 if(textureErr){
                                     alert("Fatal Error getting texture");
                                     console.error(textureErr);
                                 }else{
                                     console.log("texture loaded");
-                                    RunWebGL(vertText, fragText, modelObj, texture);
+                                    util.loadImage('./Resources/Textures/crate.png', function (textureErr, floor) {
+                                        if(textureErr){
+                                            alert("Fatal Error getting texture");
+                                            console.error(textureErr);
+                                        }else{
+                                            console.log("texture loaded");
+                                            RunWebGL(vertText, fragText, modelObj, texture, floor);
+                                        }
+                                    });
                                 }
                             });
                         }
@@ -36,10 +44,9 @@ function LoadResources(){
 
 
 var model;
-
 //var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
-function RunWebGL(vertText, fragText, susanModel, texture){
+function RunWebGL(vertText, fragText, susanModel, texture, floor){
     //test.loadResources();
     model = susanModel;
     console.log('Initializing WebGL...');
@@ -94,13 +101,44 @@ function RunWebGL(vertText, fragText, susanModel, texture){
         return;
     }
 
+
+
     let susanVertices = susanModel.meshes[0].vertices;
     let susanNormals = susanModel.meshes[0].normals;
-    let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
     //the dragon has no Texcoords, give it an empty array so it can use the color Textures
-    //let susanTexCoords = Array(susanVertices.length);
+    let susanTexCoords = Array(susanVertices.length);
 
     let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
+
+    //<editor-fold desc="floor data">
+
+    let floorVertices = [
+        10.0, 0.0, 10.0,
+        -10.0, 0.0, 10.0,
+        10.0,0.0,-10.0,
+        -10.0,0.0,-10.0
+    ];
+
+    let floorNormals = [
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0
+    ];
+
+    let floorTexCoords = [
+        1.0, 1.0,
+        0.0, 1.0,
+        1.0, 0.0,
+        0.0, 0.0
+    ];
+
+    let floorIndices = [
+        0,2,1,1,2,3
+    ];
+
+    //</editor-fold>
 
     let susanVertexBufferObject = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
@@ -110,50 +148,68 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     context.bindBuffer(context.ARRAY_BUFFER, susanNormalBufferObject);
     context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanNormals), context.STATIC_DRAW);
 
-    let susanTexCoordVertexBufferObject = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordVertexBufferObject);
+    let susanTexCoordBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordBufferObject);
     context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanTexCoords), context.STATIC_DRAW);
 
     let susanIndexBufferObject = context.createBuffer();
     context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, susanIndexBufferObject);
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(susanIndices), context.STATIC_DRAW);
 
-    context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
+
+    let floorVertexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, floorVertexBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(floorVertices), context.STATIC_DRAW);
+
+    let floorNormalBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, floorNormalBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(floorNormals), context.STATIC_DRAW);
+
+    let floorTexCoordBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, floorTexCoordBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(floorTexCoords), context.STATIC_DRAW);
+
+    let floorIndexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, floorIndexBufferObject);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(floorIndices), context.STATIC_DRAW);
+
     let vertAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
-    context.vertexAttribPointer(
-        vertAttributeLocation, //Attribute location
-        3, //number of elements per Attribute
-        context.FLOAT, //type of elements
-        false, //normalization
-        3*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
-        0 //offset
-    );
-    context.enableVertexAttribArray(vertAttributeLocation);
-
-    context.bindBuffer(context.ARRAY_BUFFER, susanNormalBufferObject);
     let normalAttributeLocation = context.getAttribLocation(shaderProgram, "vertexNormal");
-    console.log(normalAttributeLocation);
-    context.vertexAttribPointer(
-        normalAttributeLocation,
-        3,
-        context.FLOAT,
-        false,
-        3* Float32Array.BYTES_PER_ELEMENT,
-        0
-    );
-    context.enableVertexAttribArray(normalAttributeLocation);
-
-    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordVertexBufferObject);
     let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
-    context.vertexAttribPointer(
-        texCoordAttributeLocation, //Attribute location
-        2, //number of elements per Attribute
-        context.FLOAT, //type of elements
-        false, //normalization
-        2*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
-        0*Float32Array.BYTES_PER_ELEMENT //offset
-    );
-    context.enableVertexAttribArray(texCoordAttributeLocation);
+
+    // context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
+    // context.vertexAttribPointer(
+    //     vertAttributeLocation, //Attribute location
+    //     3, //number of elements per Attribute
+    //     context.FLOAT, //type of elements
+    //     false, //normalization
+    //     3*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+    //     0 //offset
+    // );
+    // context.enableVertexAttribArray(vertAttributeLocation);
+    //
+    // context.bindBuffer(context.ARRAY_BUFFER, susanNormalBufferObject);
+    // console.log(normalAttributeLocation);
+    // context.vertexAttribPointer(
+    //     normalAttributeLocation,
+    //     3,
+    //     context.FLOAT,
+    //     false,
+    //     3* Float32Array.BYTES_PER_ELEMENT,
+    //     0
+    // );
+    // context.enableVertexAttribArray(normalAttributeLocation);
+    //
+    // context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordBufferObject);
+    // context.vertexAttribPointer(
+    //     texCoordAttributeLocation, //Attribute location
+    //     2, //number of elements per Attribute
+    //     context.FLOAT, //type of elements
+    //     false, //normalization
+    //     2*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
+    //     0*Float32Array.BYTES_PER_ELEMENT //offset
+    // );
+    // context.enableVertexAttribArray(texCoordAttributeLocation);
 
     //
     // Create Textures
@@ -165,10 +221,24 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
-
     context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, texture);
 
+    let floorTexture = context.createTexture();
+    context.bindTexture(context.TEXTURE_2D, floorTexture);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
+
+    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, floor);
+
     context.bindTexture(context.TEXTURE_2D, null);
+
+    let vertexArrays = [susanVertexBufferObject, floorVertexBufferObject];
+    let normalArrays = [susanNormalBufferObject, floorNormalBufferObject];
+    let texcoordArrays = [susanTexCoordBufferObject, floorTexCoordBufferObject];
+    let indexArrays = [susanIndexBufferObject, floorIndexBufferObject];
+    let textureArray = [ susanTexture, floorTexture];
 
     //Tell WebGL what program should have the uniforms
     context.useProgram(shaderProgram);
@@ -214,13 +284,13 @@ function RunWebGL(vertText, fragText, susanModel, texture){
     let angle = 0;
 
     let loop = function(){
-        angle = performance.now() /1000/6*2*Math.PI;
-        mat4.rotate(yRotationMatrix, identityMatrix, angle*1, [0,1,0]);
+        angle = performance.now() / 1000 / 6 * 2 * Math.PI;
+        mat4.rotate(yRotationMatrix, identityMatrix, angle * 1, [0, 1, 0]);
         //mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
         mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
         mat4.invert(normalMatrix, worldMatrix);
-        mat4.transpose(normalMatrix,normalMatrix);
+        mat4.transpose(normalMatrix, normalMatrix);
         context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
         context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
 
@@ -228,19 +298,59 @@ function RunWebGL(vertText, fragText, susanModel, texture){
         mat4.mul(mvp, mvp, worldMatrix);
         context.uniformMatrix4fv(matMVPUniformLocation, context.FALSE, mvp);
 
-        //resizeCanvas(canvas);
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
-        context.bindTexture(context.TEXTURE_2D, susanTexture);
+        for (let i = 0; i<vertexArrays.length; i++) {
+            //resizeCanvas(canvas);
 
-        context.activeTexture(context.TEXTURE0);
+            context.bindBuffer(context.ARRAY_BUFFER, vertexArrays[i]);
+            context.vertexAttribPointer(
+                vertAttributeLocation, //Attribute location
+                3, //number of elements per Attribute
+                context.FLOAT, //type of elements
+                false, //normalization
+                3*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+                0 //offset
+            );
+            context.enableVertexAttribArray(vertAttributeLocation);
 
-        context.drawElements(
-            context.TRIANGLES,
-            susanIndices.length,
-            context.UNSIGNED_SHORT,
-            0
-        );
+            context.bindBuffer(context.ARRAY_BUFFER, normalArrays[i]);
+            context.vertexAttribPointer(
+                normalAttributeLocation,
+                3,
+                context.FLOAT,
+                false,
+                3* Float32Array.BYTES_PER_ELEMENT,
+                0
+            );
+            context.enableVertexAttribArray(normalAttributeLocation);
+
+            context.bindBuffer(context.ARRAY_BUFFER, texcoordArrays[i]);
+            context.vertexAttribPointer(
+                texCoordAttributeLocation, //Attribute location
+                2, //number of elements per Attribute
+                context.FLOAT, //type of elements
+                false, //normalization
+                2*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
+                0*Float32Array.BYTES_PER_ELEMENT //offset
+            );
+            context.enableVertexAttribArray(texCoordAttributeLocation);
+
+            context.bindBuffer(context.ARRAY_BUFFER, null);
+
+            context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexArrays[i]);
+
+            context.bindTexture(context.TEXTURE_2D, textureArray[i]);
+
+            context.activeTexture(context.TEXTURE0);
+
+            context.drawElements(
+                context.TRIANGLES,
+                i===0 ? susanIndices.length : floorIndices.length,
+                context.UNSIGNED_SHORT,
+                0
+            );
+        }
         requestAnimationFrame(loop);
     };
 

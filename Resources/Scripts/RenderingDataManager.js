@@ -47,7 +47,7 @@ class RenderingDataManager{
 
     loadModel(modelPath){
         let that = this;
-        loadJSONResource(modelPath, function (err, result) {
+        util.loadJSONResource(modelPath, function (err, result) {
             if(err)
                 throw new Error("Error loading Model!");
             else{
@@ -69,7 +69,7 @@ class RenderingDataManager{
 
     initializeShaderArray(vertexShaderPathArray, fragmentShaderPathArray){
         let shaderCodeArray = this.loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray);
-        let shaderArray = new Array(shaderCodeArray.length);
+        let shaderArray = [];
         for(let shaderArrayIndex = 0; shaderArrayIndex<shaderCodeArray.length; shaderArrayIndex++){
             shaderArray.push(this.createShaderProgram(shaderCodeArray[shaderArrayIndex][0], shaderCodeArray[shaderArrayIndex][1]));
         }
@@ -78,11 +78,20 @@ class RenderingDataManager{
 
     loadShaderCodeArray(vertexShaderPathArray, fragmentShaderPathArray){
         this.checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray);
-        let shaderCodeArray = new Array(vertexShaderPathArray.length);
-        for (let shaderCodeIndex = 0; shaderCodeIndex < vertexShaderPathArray.length; shaderCodeIndex++){
-            shaderCodeArray.push(this.loadMatchingShaderCodeFiles(vertexShaderPathArray[shaderCodeIndex], fragmentShaderPathArray[shaderCodeIndex]));
-        }
-        return shaderCodeArray;
+        // let shaderCodeArray = [];
+        // for (let shaderCodeIndex = 0; shaderCodeIndex < vertexShaderPathArray.length; shaderCodeIndex++){
+        //     let matchingCodeFiles = this.loadMatchingShaderCodeFiles(vertexShaderPathArray[shaderCodeIndex], fragmentShaderPathArray[shaderCodeIndex]);
+        //     shaderCodeArray.push(matchingCodeFiles);
+        // }
+        // console.log(shaderCodeArray[0]);
+        //
+        // return shaderCodeArray;
+
+        const promises = vertexShaderPathArray
+            .map((vertexShaderPath, i) => [vertexShaderPath, fragmentShaderPathArray[i]])
+            .map(paths => this.loadMatchingShaderCodeFiles(...paths));
+
+        return Promise.all(promises);
     }
 
     checkFilePathArrayLength(vertexShaderPathArray, fragmentShaderPathArray) {
@@ -91,18 +100,40 @@ class RenderingDataManager{
     }
 
     loadMatchingShaderCodeFiles(vertexShaderPath, fragmentShaderPath){
-        let vertexShaderCode = this.loadShaderCodeFromFile(vertexShaderPath);
-        let fragmentShaderCode = this.loadShaderCodeFromFile(fragmentShaderPath);
-        return {vertexShaderCode, fragmentShaderCode};
+        // console.log(1);
+        // let vertexShaderCode;
+        // let fragmentShaderCode;
+        // let obj = this.loadShaderCodeFromFile(vertexShaderPath).then(async result => {
+        //     vertexShaderCode = result;
+        //     console.log(2);
+        //     //console.log(vertexShaderCode);
+        //     await this.loadShaderCodeFromFile(fragmentShaderPath).then(result => {
+        //         fragmentShaderCode = result;
+        //         console.log(3);
+        //         //console.log(fragmentShaderCode);
+        //     });
+        // }).then(()=>{return {vertexShaderCode, fragmentShaderCode};});
+        // console.log(4);
+        // //console.log(obj);
+        // return obj;
+        //let vertexShaderCode, fragmentShaderCode;
+        const promises = [vertexShaderPath, fragmentShaderPath]
+            .map(path => this.loadShaderCodeFromFile(path));
+        return Promise.all(promises).then(([vertexShaderCode, fragmentShaderCode]) => {
+            return {vertexShaderCode, fragmentShaderCode};
+        });
     }
 
     loadShaderCodeFromFile(ShaderFilePath){
-        loadTextResourceFromFile(ShaderFilePath, function (err, result) {
-            if (err)
-                throw new Error(err);
-            else
-                return result;
-        });
+        return util.loadTextResourceFromFile(ShaderFilePath);
+
+        // util.loadTextResourceFromFile(ShaderFilePath, function (err, result) {
+            //     if (err)
+            //         throw new Error(err);
+            //     else
+            //         return result;
+            // });
+        //});
     }
 
     createShaderProgram(vertexCode, fragmentCode){
@@ -113,12 +144,12 @@ class RenderingDataManager{
         return shaderProgram;
     }
 
-    compileShader(shaderCode, shaderType){
+    compileShader(shaderCode, shaderType, callback){
         let compiledShader = this.context.createShader(shaderType);
         this.context.shaderSource(compiledShader, shaderCode);
         this.context.compileShader(compiledShader);
         this.checkShaderCompilationStatus(compiledShader);
-        return compiledShader;
+        callback(null, compiledShader);
     }
 
     linkShaderProgram(vertexShader, fragmentShader){
