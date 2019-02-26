@@ -10,26 +10,40 @@ function LoadResources(){
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
                 }else{
-                    console.log("frag loaded");
-                    util.loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
-                        if(modelErr){
-                            alert("Fatal Error getting model");
-                            console.error(modelErr);
+                    util.loadTextResourceFromFile('./Resources/Shaders/ShadowMapGenerator.frag', function (fragErr, shadowmapgenfrag) {
+                        if (fragErr) {
+                            alert("Fatal Error getting shadow Fragment shader");
+                            console.error(fragErr);
                         }else{
-                            console.log("model loaded");
-                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
-                                if(textureErr){
-                                    alert("Fatal Error getting texture");
-                                    console.error(textureErr);
-                                }else{
-                                    console.log("texture loaded");
-                                    util.loadImage('./Resources/Textures/crate.png', function (textureErr, floor) {
-                                        if(textureErr){
-                                            alert("Fatal Error getting texture");
-                                            console.error(textureErr);
-                                        }else{
-                                            console.log("texture loaded");
-                                            RunWebGL(vertText, fragText, modelObj, texture, floor);
+                            util.loadTextResourceFromFile('./Resources/Shaders/ShadowMapGenerator.vert', function (fragErr, shadowmapgenvert) {
+                                if (fragErr) {
+                                    alert("Fatal Error getting shadow vert shader");
+                                    console.error(fragErr);
+                                } else {
+                                    console.log("frag loaded");
+                                    util.loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
+                                        if (modelErr) {
+                                            alert("Fatal Error getting model");
+                                            console.error(modelErr);
+                                        } else {
+                                            console.log("model loaded");
+                                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
+                                                if (textureErr) {
+                                                    alert("Fatal Error getting texture");
+                                                    console.error(textureErr);
+                                                } else {
+                                                    console.log("texture loaded");
+                                                    util.loadImage('./Resources/Textures/crate.png', function (textureErr, floor) {
+                                                        if (textureErr) {
+                                                            alert("Fatal Error getting texture");
+                                                            console.error(textureErr);
+                                                        } else {
+                                                            console.log("texture loaded");
+                                                            RunWebGL(vertText, fragText, modelObj, texture, floor, shadowmapgenvert, shadowmapgenfrag);
+                                                        }
+                                                    });
+                                                }
+                                            });
                                         }
                                     });
                                 }
@@ -46,7 +60,7 @@ function LoadResources(){
 var model;
 //var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
-function RunWebGL(vertText, fragText, susanModel, texture, floor){
+function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenvert, shadowmapgenfrag){
     //test.loadResources();
     model = susanModel;
     console.log('Initializing WebGL...');
@@ -89,6 +103,30 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor){
     context.attachShader(shaderProgram, vertexShader);
     context.attachShader(shaderProgram, fragmentShader);
     context.linkProgram(shaderProgram);
+
+    let shadowVertexShader = context.createShader(context.VERTEX_SHADER);
+    let shadowFragmentShader = context.createShader(context.FRAGMENT_SHADER);
+
+    context.shaderSource(shadowVertexShader, shadowmapgenvert);
+    context.shaderSource(shadowFragmentShader, shadowmapgenfrag);
+
+    context.compileShader(shadowVertexShader);
+    if(!context.getShaderParameter(shadowVertexShader, context.COMPILE_STATUS)){
+        console.error("Error compiling shadow vertex Shaders!", context.getShaderInfoLog(shadowVertexShader));
+        return;
+    }
+
+    context.compileShader(shadowFragmentShader);
+    if(!context.getShaderParameter(shadowFragmentShader, context.COMPILE_STATUS)){
+        console.error("Error compiling shadow fragment Shaders!", context.getShaderInfoLog(shadowFragmentShader));
+        return;
+    }
+
+    let ShadowMapGeneratorProgram = context.createProgram();
+    context.attachShader(ShadowMapGeneratorProgram, shadowVertexShader);
+    context.attachShader(ShadowMapGeneratorProgram, shadowFragmentShader);
+    context.linkProgram(ShadowMapGeneratorProgram);
+
 
     if(!context.getProgramParameter(shaderProgram, context.LINK_STATUS)){
         console.error("Error linking program!", context.getProgramInfoLog(shaderProgram));
@@ -177,39 +215,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor){
     let normalAttributeLocation = context.getAttribLocation(shaderProgram, "vertexNormal");
     let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
 
-    // context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
-    // context.vertexAttribPointer(
-    //     vertAttributeLocation, //Attribute location
-    //     3, //number of elements per Attribute
-    //     context.FLOAT, //type of elements
-    //     false, //normalization
-    //     3*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
-    //     0 //offset
-    // );
-    // context.enableVertexAttribArray(vertAttributeLocation);
-    //
-    // context.bindBuffer(context.ARRAY_BUFFER, susanNormalBufferObject);
-    // console.log(normalAttributeLocation);
-    // context.vertexAttribPointer(
-    //     normalAttributeLocation,
-    //     3,
-    //     context.FLOAT,
-    //     false,
-    //     3* Float32Array.BYTES_PER_ELEMENT,
-    //     0
-    // );
-    // context.enableVertexAttribArray(normalAttributeLocation);
-    //
-    // context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordBufferObject);
-    // context.vertexAttribPointer(
-    //     texCoordAttributeLocation, //Attribute location
-    //     2, //number of elements per Attribute
-    //     context.FLOAT, //type of elements
-    //     false, //normalization
-    //     2*Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex element
-    //     0*Float32Array.BYTES_PER_ELEMENT //offset
-    // );
-    // context.enableVertexAttribArray(texCoordAttributeLocation);
+
 
     //
     // Create Textures

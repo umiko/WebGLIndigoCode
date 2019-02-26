@@ -4,6 +4,9 @@ varying vec3 vertexForFrag;
 varying vec3 normalForFrag;
 varying vec2 texCoordForFrag;
 
+uniform samplerCube lightShadowMap;
+uniform vec2 shadowClipNearFar;
+
 uniform sampler2D sampler;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -27,21 +30,26 @@ vec3 specularCalc(vec3 halfwayDir, vec3 lightColor, float shininess){
 }
 
 void main(){
-    //calculate or define necessary "globals"
     vec3 lightColor = vec3(1, 1, 1);
     vec3 viewDir = normalize(viewPos-vertexForFrag);
     vec3 lightDirection = lightDirectionCalc(lightPos);
     vec3 halfwayDir = normalize(lightDirection+viewDir);
     float shininess = 32.0;
 
+    float lightToFragment = (length(vertexForFrag - lightPos) - shadowClipNearFar.x)/(shadowClipNearFar.y - shadowClipNearFar.x);
+    //float shadowMapValue = textureCube(lightShadowMap, lightDirection).r;
+    //calculate or define necessary "globals"
+
+
     //ambient
-    vec3 ambientResult = ambientCalc(.1, lightColor);
-    //diffuse
-    vec3 diffuseResult = diffuseCalc(lightDirection, lightColor);
-    //specular
-    vec3 specularResult = specularCalc(halfwayDir, lightColor, shininess);
+    vec3 lightingResult = ambientCalc(.1, lightColor);
+
+    //if(shadowMapValue>=lightToFragment){
+        lightingResult += diffuseCalc(lightDirection, lightColor);
+        lightingResult += specularCalc(halfwayDir, lightColor, shininess);
+    //}
     //combine
-    vec3 result = (ambientResult + diffuseResult + specularResult) * texture2D(sampler, texCoordForFrag).xyz;
+    vec3 result = lightingResult * texture2D(sampler, texCoordForFrag).xyz;
     gl_FragColor = vec4(result, 1.0);
 }
 
