@@ -143,6 +143,9 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
         mProj : context.getUniformLocation(ShadowMapGeneratorProgram, "mProj"),
         mView : context.getUniformLocation(ShadowMapGeneratorProgram, "mView"),
         mWorld : context.getUniformLocation(ShadowMapGeneratorProgram, "mWorld"),
+        shadowClipNearFar : context.getUniformLocation(ShadowMapGeneratorProgram, "shadowClipNearFar"),
+        lightPosition : context.getUniformLocation(ShadowMapGeneratorProgram, "lightPosition")
+
     };
 
     ShadowMapGeneratorProgram.attribs = {
@@ -229,8 +232,6 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     let normalAttributeLocation = context.getAttribLocation(shaderProgram, "vertexNormal");
     let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
 
-
-
     //
     // Create Textures
     //
@@ -302,13 +303,70 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.activeTexture(context.TEXTURE1);
     context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
 
-    let lightPos = new Float32Array([100.0, 100.0, -100.0]);
+    let lightPos = new Float32Array([10.0, 10.0, -10.0]);
     let viewPos = new Float32Array([0,5,-15]);
     let worldMatrix = new Float32Array(16);
     let viewMatrix = new Float32Array(16);
     let projMatrix = new Float32Array(16);
     let normalMatrix = mat4.create();
 
+    let shadowMapCameras = [
+        // Positive X
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(), lightPos, vec3.fromValues(1, 0, 0)),
+            vec3.fromValues(0, -1, 0)
+        ),
+        // Negative X
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(),lightPos, vec3.fromValues(-1, 0, 0)),
+            vec3.fromValues(0, -1, 0)
+        ),
+        // Positive Y
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(), lightPos, vec3.fromValues(0, 1, 0)),
+            vec3.fromValues(0, 0, 1)
+        ),
+        // Negative Y
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(), lightPos, vec3.fromValues(0, -1, 0)),
+            vec3.fromValues(0, 0, -1)
+        ),
+        // Positive Z
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(),lightPos, vec3.fromValues(0, 0, 1)),
+            vec3.fromValues(0, -1, 0)
+        ),
+        // Negative Z
+        new Camera(
+            lightPos,
+            vec3.add(vec3.create(), lightPos, vec3.fromValues(0, 0, -1)),
+            vec3.fromValues(0, -1, 0)
+        ),
+    ];
+
+    let shadowMapViewMatrices = [
+        mat4.create(),
+        mat4.create(),
+        mat4.create(),
+        mat4.create(),
+        mat4.create(),
+        mat4.create()
+    ];
+
+    let shadowMapProj = mat4.create();
+    let shadowClipNearFar = vec2.fromValues(0.05, 15.0);
+    mat4.perspective(
+        shadowMapProj,
+        glMatrix.toRadian(90),
+        1.0,
+        shadowClipNearFar[0],
+        shadowClipNearFar[1]
+    );
 
     mat4.identity(worldMatrix);
     mat4.lookAt(viewMatrix, viewPos, [0,5,0], [0,1,0]);
@@ -318,6 +376,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.uniformMatrix4fv(matWorldUniformLocation, false, worldMatrix);
     context.uniformMatrix4fv(matViewUniformLocation, false, viewMatrix);
     context.uniformMatrix4fv(matProjUniformLocation, false, projMatrix);
+
     context.uniform3fv(viewPosUniformLocation, viewPos);
 
     //
@@ -334,7 +393,69 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
     let angle = 0;
 
+    let generateShadowMap = function(){
+        context.useProgram(ShadowMapGeneratorProgram);
+
+        context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
+        context.bindFramebuffer(context.FRAMEBUFFER, shadowMapFrameBuffer);
+        context.bindRenderbuffer(context.RENDERBUFFER, shadowMapRenderBuffer);
+
+        context.viewport(0,0, 512,512);
+        context.enable(context.DEPTH_TEST);
+        context.enable(context.CULL_FACE);
+
+        context.uniform2fv(ShadowMapGeneratorProgram.uniforms.shadowClipNearFar, shadowClipNearFar);
+        context.uniform3fv(ShadowMapGeneratorProgram.uniforms.lightPosition, lightPos);
+        context.uniformMatrix4fv(ShadowMapGeneratorProgram.uniforms.mProj, context.FALSE, shadowMapProj);
+
+        for(let j = 0; j< shadowMapCameras.length; j++){
+            context.uniformMatrix4fv(ShadowMapGeneratorProgram.uniforms.mView, context.FALSE, shadowMapCameras[j].GetViewMatrix(shadowMapViewMatrices[j]));
+            context.framebufferTexture2D(context.FRAMEBUFFER, context.COLOR_ATTACHMENT0, context.TEXTURE_CUBE_MAP_POSITIVE_X+j, shadowMapCubeTexture, 0);
+            context.framebufferRenderbuffer(context.FRAMEBUFFER, context.DEPTH_ATTACHMENT, context.RENDERBUFFER, shadowMapRenderBuffer);
+
+            context.clearColor(1,1,1,1);
+            context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
+
+            for (let i = 0; i<vertexArrays.length; i++) {
+                //resizeCanvas(canvas);
+
+                context.uniformMatrix4fv(ShadowMapGeneratorProgram.uniforms.mWorld, context.FALSE, worldMatrix);
+                context.uniformMatrix4fv(ShadowMapGeneratorProgram.uniforms.mProj, context.FALSE, projMatrix);
+
+                context.bindBuffer(context.ARRAY_BUFFER, vertexArrays[i]);
+                context.vertexAttribPointer(
+                    vertAttributeLocation, //Attribute location
+                    3, //number of elements per Attribute
+                    context.FLOAT, //type of elements
+                    false, //normalization
+                    3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+                    0 //offset
+                );
+
+                context.enableVertexAttribArray(vertAttributeLocation);
+
+                context.bindBuffer(context.ARRAY_BUFFER, null);
+
+                context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexArrays[i]);
+
+                context.drawElements(
+                    context.TRIANGLES,
+                    i === 0 ? susanIndices.length : floorIndices.length,
+                    context.UNSIGNED_SHORT,
+                    0
+                );
+            }
+        }
+
+        context.bindFramebuffer(context.FRAMEBUFFER, null);
+        context.bindRenderbuffer(context.RENDERBUFFER, null);
+        context.bindTexture(context.TEXTURE_CUBE_MAP, null);
+
+
+    };
+
     let loop = function(){
+
         angle = performance.now() / 1000 / 6 * 2 * Math.PI;
         mat4.rotate(yRotationMatrix, identityMatrix, angle * 1, [0, 1, 0]);
         //mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
@@ -342,12 +463,25 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
         mat4.invert(normalMatrix, worldMatrix);
         mat4.transpose(normalMatrix, normalMatrix);
-        context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
-        context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
+
 
         mat4.mul(mvp, projMatrix, viewMatrix);
         mat4.mul(mvp, mvp, worldMatrix);
+
+        generateShadowMap();
+        context.useProgram(shaderProgram);
+
+        context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
+        context.uniformMatrix4fv(matWorldUniformLocation, context.FALSE, worldMatrix);
+        context.uniformMatrix4fv(matViewUniformLocation, context.FALSE, viewMatrix);
+        context.uniformMatrix4fv(matProjUniformLocation, context.FALSE, projMatrix);
         context.uniformMatrix4fv(matMVPUniformLocation, context.FALSE, mvp);
+        context.uniform2fv(shadowClipUniform, shadowClipNearFar);
+        context.uniform1i(lightShadowMapUniform, 1);
+        context.activeTexture(context.TEXTURE1);
+        context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
+
+        context.viewport(0,0, canvas.width, canvas.height);
 
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
@@ -405,7 +539,29 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
         }
         requestAnimationFrame(loop);
     };
-
     requestAnimationFrame(loop);
-
 }
+
+var Camera = function (position, lookAt, up) {
+    this.forward = vec3.create();
+    this.up = vec3.create();
+    this.right = vec3.create();
+
+    this.position = position;
+
+    vec3.subtract(this.forward, lookAt, this.position);
+    vec3.cross(this.right, this.forward, up);
+    vec3.cross(this.up, this.right, this.forward);
+
+    vec3.normalize(this.forward, this.forward);
+    vec3.normalize(this.right, this.right);
+    vec3.normalize(this.up, this.up);
+};
+
+
+Camera.prototype.GetViewMatrix = function (out) {
+    var lookAt = vec3.create();
+    vec3.add(lookAt, this.position, this.forward);
+    mat4.lookAt(out, this.position, lookAt, this.up);
+    return out;
+};

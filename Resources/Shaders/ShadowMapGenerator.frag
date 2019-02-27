@@ -1,7 +1,7 @@
 precision mediump float;
 
 uniform vec3 lightPosition;
-uniform vec3 shadowClipNearFar;
+uniform vec2 shadowClipNearFar;
 
 varying vec3 vertexForFrag;
 
