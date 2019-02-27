@@ -139,6 +139,16 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
         return;
     }
 
+    ShadowMapGeneratorProgram.uniforms = {
+        mProj : context.getUniformLocation(ShadowMapGeneratorProgram, "mProj"),
+        mView : context.getUniformLocation(ShadowMapGeneratorProgram, "mView"),
+        mWorld : context.getUniformLocation(ShadowMapGeneratorProgram, "mWorld"),
+    };
+
+    ShadowMapGeneratorProgram.attribs = {
+        vertPosition : context.getAttribLocation(ShadowMapGeneratorProgram, "vertPosition")
+    };
+
 
 
     let susanVertices = susanModel.meshes[0].vertices;
@@ -178,6 +188,8 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
     //</editor-fold>
 
+    //<editor-fold desc="buffer creation">
+
     let susanVertexBufferObject = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
     context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanVertices), context.STATIC_DRAW);
@@ -211,6 +223,8 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, floorIndexBufferObject);
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(floorIndices), context.STATIC_DRAW);
 
+    //</editor-fold>
+
     let vertAttributeLocation = context.getAttribLocation(shaderProgram, "vertPosition");
     let normalAttributeLocation = context.getAttribLocation(shaderProgram, "vertexNormal");
     let texCoordAttributeLocation = context.getAttribLocation(shaderProgram, "vertTexCoord");
@@ -220,6 +234,28 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     //
     // Create Textures
     //
+
+    let shadowMapCubeTexture = context.createTexture();
+    context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
+    context.texParameteri(context.TEXTURE_CUBE_MAP, context.TEXTURE_WRAP_S, context.MIRRORED_REPEAT);
+    context.texParameteri(context.TEXTURE_CUBE_MAP, context.TEXTURE_WRAP_T, context.MIRRORED_REPEAT);
+    context.texParameteri(context.TEXTURE_CUBE_MAP, context.TEXTURE_MIN_FILTER, context.LINEAR);
+    context.texParameteri(context.TEXTURE_CUBE_MAP, context.TEXTURE_MAG_FILTER, context.LINEAR);
+
+    for(let i = 0; i<6; i++ ){
+        context.texImage2D(context.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, context.RGBA, 512, 512, 0, context.RGBA, context.UNSIGNED_BYTE, null);
+    }
+
+    let shadowMapFrameBuffer = context.createFramebuffer();
+    context.bindFramebuffer(context.FRAMEBUFFER, shadowMapFrameBuffer);
+
+    let shadowMapRenderBuffer = context.createRenderbuffer();
+    context.bindRenderbuffer(context.RENDERBUFFER, shadowMapRenderBuffer);
+    context.renderbufferStorage(context.RENDERBUFFER, context.DEPTH_COMPONENT16, 512, 512);
+
+    context.bindTexture(context.TEXTURE_CUBE_MAP, null);
+    context.bindRenderbuffer(context.RENDERBUFFER, null);
+    context.bindFramebuffer(context.FRAMEBUFFER, null);
 
     let susanTexture = context.createTexture();
     context.bindTexture(context.TEXTURE_2D, susanTexture);
@@ -256,6 +292,15 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     let matProjUniformLocation = context.getUniformLocation(shaderProgram, "mProj");
     let matNormUniformLocation = context.getUniformLocation(shaderProgram, "mNormal");
     let matMVPUniformLocation = context.getUniformLocation(shaderProgram, "mvp");
+    let textureUniformLocation = context.getUniformLocation(shaderProgram, "texSampler");
+    let lightShadowMapUniform = context.getUniformLocation(shaderProgram, "lightShadowMap");
+    let shadowClipUniform = context.getUniformLocation(shaderProgram, "shadowClipNearFar");
+
+    context.uniform1i(textureUniformLocation, 0);
+    context.uniform1i(lightShadowMapUniform, 1);
+
+    context.activeTexture(context.TEXTURE1);
+    context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
 
     let lightPos = new Float32Array([100.0, 100.0, -100.0]);
     let viewPos = new Float32Array([0,5,-15]);
@@ -346,9 +391,10 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
             context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexArrays[i]);
 
+            context.activeTexture(context.TEXTURE0);
             context.bindTexture(context.TEXTURE_2D, textureArray[i]);
 
-            context.activeTexture(context.TEXTURE0);
+
 
             context.drawElements(
                 context.TRIANGLES,
