@@ -165,10 +165,10 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     //<editor-fold desc="floor data">
 
     let floorVertices = [
-        10.0, 0.0, 10.0,
-        -10.0, 0.0, 10.0,
-        10.0,0.0,-10.0,
-        -10.0,0.0,-10.0
+        10.0, -1.0, 10.0,
+        -10.0, -1.0, 10.0,
+        10.0,-1.0,-10.0,
+        -10.0,-1.0,-10.0
     ];
 
     let floorNormals = [
@@ -303,8 +303,8 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.activeTexture(context.TEXTURE1);
     context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
 
-    let lightPos = new Float32Array([10.0, 10.0, -10.0]);
-    let viewPos = new Float32Array([0,5,-15]);
+    let lightPos = new Float32Array([0.0, 15.0, 0.0]);
+    let viewPos = new Float32Array([0,5,-20]);
     let worldMatrix = new Float32Array(16);
     let viewMatrix = new Float32Array(16);
     let projMatrix = new Float32Array(16);
@@ -359,7 +359,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     ];
 
     let shadowMapProj = mat4.create();
-    let shadowClipNearFar = vec2.fromValues(0.05, 15.0);
+    let shadowClipNearFar = vec2.fromValues(0.15, 25.0);
     mat4.perspective(
         shadowMapProj,
         glMatrix.toRadian(90),
@@ -369,7 +369,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     );
 
     mat4.identity(worldMatrix);
-    mat4.lookAt(viewMatrix, viewPos, [0,5,0], [0,1,0]);
+    mat4.lookAt(viewMatrix, viewPos, [0,3,0], [0,1,0]);
     mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, .1, 1000.0);
 
     context.uniform3fv(lightPosUniformLocation, lightPos);
