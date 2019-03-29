@@ -73,6 +73,7 @@ var mx = 0;
 var my = 0;
 var windowHalfX=0;
 var windowHalfY=0;
+var rotation;
 //var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
 function RunWebGL(vertText, fragText, rockModel, texture, floorTex, shadowmapgenvert, shadowmapgenfrag, thicknessmap){
@@ -475,8 +476,8 @@ function RunWebGL(vertText, fragText, rockModel, texture, floorTex, shadowmapgen
     let loop = function(){
 
         angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        mat4.rotate(yRotationMatrix, identityMatrix, angle/4 * 1, [0, 1, 0]);
-        //mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
+        mat4.rotate(yRotationMatrix, identityMatrix, mx/200, [0, 1, 0]);
+        mat4.rotate(xRotationMatrix, identityMatrix, -my/200, [1,0,0]);
         mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
         mat4.invert(normalMatrix, worldMatrix);
