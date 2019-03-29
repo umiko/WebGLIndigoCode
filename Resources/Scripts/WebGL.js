@@ -1,11 +1,11 @@
 function LoadResources(){
-    util.loadTextResourceFromFile('./Resources/Shaders/shader.vert', function (vertErr, vertText) {
+    util.loadTextResourceFromFile('./Resources/Shaders/sssshader.vert', function (vertErr, vertText) {
         if(vertErr){
             alert("Fatal Error getting Vertex shader");
             console.error(vertErr);
         }else{
             console.log("vert loaded");
-            util.loadTextResourceFromFile('./Resources/Shaders/shader.frag', function (fragErr, fragText) {
+            util.loadTextResourceFromFile('./Resources/Shaders/sssshader.frag', function (fragErr, fragText) {
                 if (fragErr) {
                     alert("Fatal Error getting Fragment shader");
                     console.error(fragErr);
@@ -21,13 +21,16 @@ function LoadResources(){
                                     console.error(fragErr);
                                 } else {
                                     console.log("frag loaded");
-                                    util.loadJSONResource('./Resources/Models/stanford_dragon.json', function (modelErr, modelObj) {
+                                    util.loadJSONResource('./Resources/Models/rock.json', function (modelErr, modelObj) {
                                         if (modelErr) {
                                             alert("Fatal Error getting model");
                                             console.error(modelErr);
                                         } else {
                                             console.log("model loaded");
-                                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, texture) {
+                                            //util.loadImage('./Resources/Textures/rock_translucency.png', function (textureErr, texture) {                                            
+                                            //util.loadImage('./Resources/Textures/rock_normal.png', function (textureErr, texture) {                                            
+                                            util.loadImage('./Resources/Textures/rocklusion.png', function (textureErr, texture) {
+                                            //util.loadImage('./Resources/Textures/rock_thickness.png', function (textureErr, texture) {
                                                 if (textureErr) {
                                                     alert("Fatal Error getting texture");
                                                     console.error(textureErr);
@@ -38,8 +41,15 @@ function LoadResources(){
                                                             alert("Fatal Error getting texture");
                                                             console.error(textureErr);
                                                         } else {
-                                                            console.log("texture loaded");
-                                                            RunWebGL(vertText, fragText, modelObj, texture, floor, shadowmapgenvert, shadowmapgenfrag);
+                                                            util.loadImage('./Resources/Textures/jade.png', function (textureErr, thickness) {
+                                                                if (textureErr) {
+                                                                    alert("Fatal Error getting texture");
+                                                                    console.error(textureErr);
+                                                                } else {
+                                                                    console.log("texture loaded");
+                                                                    RunWebGL(vertText, fragText, modelObj, texture, floor, shadowmapgenvert, shadowmapgenfrag, thickness);
+                                                                }
+                                                            });
                                                         }
                                                     });
                                                 }
@@ -56,15 +66,23 @@ function LoadResources(){
     });
 }
 
-
+var shadows = false;
+var floor = false;
 var model;
+var mx = 0;
+var my = 0;
+var windowHalfX=0;
+var windowHalfY=0;
 //var test = new DrawableObject(['./Resources/Shaders/Shaders.vert'], ['./Resources/Shaders/Shaders.frag']);
 
-function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenvert, shadowmapgenfrag){
+function RunWebGL(vertText, fragText, rockModel, texture, floorTex, shadowmapgenvert, shadowmapgenfrag, thicknessmap){
     //test.loadResources();
-    model = susanModel;
+    model = rockModel;
     console.log('Initializing WebGL...');
     let canvas = document.getElementById("viewport");
+
+    windowHalfX = canvas.width/2;
+    windowHalfY = canvas.height/2;
     //resizeCanvas(canvas);
     let context = canvas.getContext('webgl');
 
@@ -154,13 +172,13 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
 
 
-    let susanVertices = susanModel.meshes[0].vertices;
-    let susanNormals = susanModel.meshes[0].normals;
-    //let susanTexCoords = susanModel.meshes[0].texturecoords[0];
+    let rockVertices = rockModel.meshes[0].vertices;
+    let rockNormals = rockModel.meshes[0].normals;
+    let rockTexCoords = rockModel.meshes[0].texturecoords[0];
     //the dragon has no Texcoords, give it an empty array so it can use the color Textures
-    let susanTexCoords = Array(susanVertices.length);
+    //let rockTexCoords = Array(rockVertices.length);
 
-    let susanIndices = [].concat.apply([], susanModel.meshes[0].faces);
+    let rockIndices = [].concat.apply([], rockModel.meshes[0].faces);
 
     //<editor-fold desc="floor data">
 
@@ -193,21 +211,21 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
     //<editor-fold desc="buffer creation">
 
-    let susanVertexBufferObject = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, susanVertexBufferObject);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanVertices), context.STATIC_DRAW);
+    let rockVertexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, rockVertexBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(rockVertices), context.STATIC_DRAW);
 
-    let susanNormalBufferObject = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, susanNormalBufferObject);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanNormals), context.STATIC_DRAW);
+    let rockNormalBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, rockNormalBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(rockNormals), context.STATIC_DRAW);
 
-    let susanTexCoordBufferObject = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, susanTexCoordBufferObject);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(susanTexCoords), context.STATIC_DRAW);
+    let rockTexCoordBufferObject = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, rockTexCoordBufferObject);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(rockTexCoords), context.STATIC_DRAW);
 
-    let susanIndexBufferObject = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, susanIndexBufferObject);
-    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(susanIndices), context.STATIC_DRAW);
+    let rockIndexBufferObject = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, rockIndexBufferObject);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(rockIndices), context.STATIC_DRAW);
 
 
     let floorVertexBufferObject = context.createBuffer();
@@ -244,7 +262,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.texParameteri(context.TEXTURE_CUBE_MAP, context.TEXTURE_MAG_FILTER, context.LINEAR);
 
     for(let i = 0; i<6; i++ ){
-        context.texImage2D(context.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, context.RGBA, 512, 512, 0, context.RGBA, context.UNSIGNED_BYTE, null);
+        context.texImage2D(context.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, context.RGBA, 2048, 2048, 0, context.RGBA, context.UNSIGNED_BYTE, null);
     }
 
     let shadowMapFrameBuffer = context.createFramebuffer();
@@ -252,14 +270,14 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
     let shadowMapRenderBuffer = context.createRenderbuffer();
     context.bindRenderbuffer(context.RENDERBUFFER, shadowMapRenderBuffer);
-    context.renderbufferStorage(context.RENDERBUFFER, context.DEPTH_COMPONENT16, 512, 512);
+    context.renderbufferStorage(context.RENDERBUFFER, context.DEPTH_COMPONENT16, 2048, 2048);
 
     context.bindTexture(context.TEXTURE_CUBE_MAP, null);
     context.bindRenderbuffer(context.RENDERBUFFER, null);
     context.bindFramebuffer(context.FRAMEBUFFER, null);
 
-    let susanTexture = context.createTexture();
-    context.bindTexture(context.TEXTURE_2D, susanTexture);
+    let rockTexture = context.createTexture();
+    context.bindTexture(context.TEXTURE_2D, rockTexture);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
@@ -273,15 +291,15 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
 
-    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, floor);
+    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, floorTex);
 
     context.bindTexture(context.TEXTURE_2D, null);
 
-    let vertexArrays = [susanVertexBufferObject, floorVertexBufferObject];
-    let normalArrays = [susanNormalBufferObject, floorNormalBufferObject];
-    let texcoordArrays = [susanTexCoordBufferObject, floorTexCoordBufferObject];
-    let indexArrays = [susanIndexBufferObject, floorIndexBufferObject];
-    let textureArray = [ susanTexture, floorTexture];
+    let vertexArrays = [rockVertexBufferObject, floorVertexBufferObject];
+    let normalArrays = [rockNormalBufferObject, floorNormalBufferObject];
+    let texcoordArrays = [rockTexCoordBufferObject, floorTexCoordBufferObject];
+    let indexArrays = [rockIndexBufferObject, floorIndexBufferObject];
+    let textureArray = [ rockTexture, floorTexture];
 
     //Tell WebGL what program should have the uniforms
     context.useProgram(shaderProgram);
@@ -303,8 +321,8 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     context.activeTexture(context.TEXTURE1);
     context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
 
-    let lightPos = new Float32Array([0.0, 15.0, 0.0]);
-    let viewPos = new Float32Array([0,5,-20]);
+    let lightPos = new Float32Array([10.0, 50.0, 0.0]);
+    let viewPos = new Float32Array([0,30,-50]);
     let worldMatrix = new Float32Array(16);
     let viewMatrix = new Float32Array(16);
     let projMatrix = new Float32Array(16);
@@ -359,7 +377,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     ];
 
     let shadowMapProj = mat4.create();
-    let shadowClipNearFar = vec2.fromValues(0.15, 25.0);
+    let shadowClipNearFar = vec2.fromValues(5.0, 70.0);
     mat4.perspective(
         shadowMapProj,
         glMatrix.toRadian(90),
@@ -369,7 +387,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     );
 
     mat4.identity(worldMatrix);
-    mat4.lookAt(viewMatrix, viewPos, [0,3,0], [0,1,0]);
+    mat4.lookAt(viewMatrix, viewPos, [0,15,0], [0,1,0]);
     mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, .1, 1000.0);
 
     context.uniform3fv(lightPosUniformLocation, lightPos);
@@ -400,7 +418,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
         context.bindFramebuffer(context.FRAMEBUFFER, shadowMapFrameBuffer);
         context.bindRenderbuffer(context.RENDERBUFFER, shadowMapRenderBuffer);
 
-        context.viewport(0,0, 512,512);
+        context.viewport(0,0, 2048, 2048);
         context.enable(context.DEPTH_TEST);
         context.enable(context.CULL_FACE);
 
@@ -440,7 +458,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
                 context.drawElements(
                     context.TRIANGLES,
-                    i === 0 ? susanIndices.length : floorIndices.length,
+                    i === 0 ? rockIndices.length : floorIndices.length,
                     context.UNSIGNED_SHORT,
                     0
                 );
@@ -457,7 +475,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     let loop = function(){
 
         angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        mat4.rotate(yRotationMatrix, identityMatrix, angle * 1, [0, 1, 0]);
+        mat4.rotate(yRotationMatrix, identityMatrix, angle/4 * 1, [0, 1, 0]);
         //mat4.rotate(xRotationMatrix, identityMatrix, angle/8, [1,0,0]);
         mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
 
@@ -467,8 +485,8 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
         mat4.mul(mvp, projMatrix, viewMatrix);
         mat4.mul(mvp, mvp, worldMatrix);
-
-        generateShadowMap();
+        if(shadows)
+            generateShadowMap();
         context.useProgram(shaderProgram);
 
         context.uniformMatrix4fv(matNormUniformLocation, context.FALSE, normalMatrix);
@@ -482,11 +500,13 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
         context.bindTexture(context.TEXTURE_CUBE_MAP, shadowMapCubeTexture);
 
         context.viewport(0,0, canvas.width, canvas.height);
-
+        context.clearColor(0,0,0,1);
         context.clear(context.DEPTH_BUFFER_BIT | context.COLOR_BUFFER_BIT);
 
         for (let i = 0; i<vertexArrays.length; i++) {
             //resizeCanvas(canvas);
+            if(i === 1 && !floor)
+                break;
 
             context.bindBuffer(context.ARRAY_BUFFER, vertexArrays[i]);
             context.vertexAttribPointer(
@@ -532,7 +552,7 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
 
             context.drawElements(
                 context.TRIANGLES,
-                i===0 ? susanIndices.length : floorIndices.length,
+                i===0 ? rockIndices.length : floorIndices.length,
                 context.UNSIGNED_SHORT,
                 0
             );
@@ -541,6 +561,14 @@ function RunWebGL(vertText, fragText, susanModel, texture, floor, shadowmapgenve
     };
     requestAnimationFrame(loop);
 }
+
+function onDocumentMouseMove(event){
+    mx = ( event.clientX - windowHalfX );
+    my = ( event.clientY - windowHalfY );
+    console.log(mx +", "+ my)
+}
+
+document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
 var Camera = function (position, lookAt, up) {
     this.forward = vec3.create();

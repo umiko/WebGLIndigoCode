@@ -43,7 +43,7 @@ void main(){
     //ambient
     vec3 lightingResult = ambientCalc(.1, lightColor);
 
-    if(shadowMapValue +0.15>=lightToFragment){
+    if(shadowMapValue +0.10>=lightToFragment){
         lightingResult += diffuseCalc(towardsLightDirection, lightColor);
         lightingResult += specularCalc(halfwayDir, lightColor, shininess);
     }
